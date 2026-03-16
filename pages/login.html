@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/webp" href="../logo.webp">
+<title>Sign In — Aultron AI</title>
+<link rel="stylesheet" href="../css/global.css">
+</head>
+<body>
+<div class="noise"></div>
+<div class="scanlines"></div>
+
+<nav class="nav">
+  <a href="../index.html" class="nav-logo"><img src="../logo.webp" alt="Aultron AI" class="nav-logo-img">AULTRON<span>.</span>AI</a>
+  <div class="nav-links">
+    <a href="signup.html" class="nav-cta">CREATE ACCOUNT →</a>
+  </div>
+</nav>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo"><img src="../logo.webp" alt="Aultron" class="auth-logo-img">AULTRON<span>.</span>AI</div>
+    <div class="auth-sub">Sign in to your account</div>
+    <div class="alert alert-error" id="errMsg"></div>
+    <div class="alert alert-success" id="okMsg"></div>
+    <div class="form-group">
+      <label class="form-label">EMAIL ADDRESS</label>
+      <input type="email" class="form-input" id="email" placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">PASSWORD</label>
+      <input type="password" class="form-input" id="password" placeholder="••••••••">
+    </div>
+    <button class="form-btn" id="loginBtn" onclick="handleLogin()">SIGN IN →</button>
+    <div class="form-divider">or</div>
+    <div class="form-footer">No account? <a href="signup.html">Create one free</a></div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { firebaseConfig } from "../js/config.js";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  window.handleLogin = async function() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const errEl = document.getElementById('errMsg');
+    const okEl = document.getElementById('okMsg');
+    const btn = document.getElementById('loginBtn');
+
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+    if (!email || !password) { errEl.textContent = '⚠ Fill in all fields.'; errEl.style.display = 'block'; return; }
+
+    btn.textContent = 'SIGNING IN...'; btn.disabled = true;
+
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const token = await cred.user.getIdToken();
+      localStorage.setItem('aultron_token', token);
+      localStorage.setItem('aultron_uid', cred.user.uid);
+      localStorage.setItem('aultron_name', cred.user.displayName || 'User');
+      okEl.textContent = '✓ Signed in! Redirecting...'; okEl.style.display = 'block';
+      setTimeout(() => { window.location.href = 'chat.html'; }, 1000);
+    } catch(err) {
+      btn.textContent = 'SIGN IN →'; btn.disabled = false;
+      const msgs = { 'auth/invalid-credential':'Wrong email or password.', 'auth/user-not-found':'No account found.', 'auth/wrong-password':'Wrong password.', 'auth/too-many-requests':'Too many attempts. Try later.' };
+      errEl.textContent = '⚠ ' + (msgs[err.code] || err.message); errEl.style.display = 'block';
+    }
+  };
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+</script>
+</body>
+</html>
