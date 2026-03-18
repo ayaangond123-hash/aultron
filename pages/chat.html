@@ -3,327 +3,177 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Aultron AI</title>
 <link rel="icon" type="image/webp" href="../logo.webp">
-<title>Chat — Aultron AI</title>
 <link rel="stylesheet" href="../css/global.css">
-<link rel="stylesheet" href="../css/chat.css">
+<style>
+body { background: var(--black); }
+.admin-wrap { max-width: 1100px; margin: 0 auto; padding: 100px 24px 40px; }
+.admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:40px; flex-wrap:wrap; gap:16px; }
+.admin-title { font-family:'Orbitron',sans-serif; font-size:1.8rem; font-weight:900; letter-spacing:0.1em; }
+.admin-title span { color:var(--green); }
+.admin-badge { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--green); border:1px solid rgba(170,255,0,0.3); padding:6px 12px; border-radius:3px; letter-spacing:0.1em; }
+
+/* STATS GRID */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:40px; }
+.stat-card { background:var(--black-3); border:1px solid var(--border-bright); border-radius:6px; padding:24px; position:relative; overflow:hidden; }
+.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--green); }
+.stat-card-val { font-family:'Orbitron',sans-serif; font-size:2rem; font-weight:900; color:var(--green); margin-bottom:6px; }
+.stat-card-label { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--white-muted); letter-spacing:0.1em; }
+
+/* USERS TABLE */
+.section-title { font-family:'Orbitron',sans-serif; font-size:0.9rem; font-weight:700; letter-spacing:0.1em; color:var(--white); margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+.section-title span { color:var(--green); }
+.table-wrap { background:var(--black-3); border:1px solid var(--border-bright); border-radius:6px; overflow:hidden; margin-bottom:32px; overflow-x:auto; }
+table { width:100%; border-collapse:collapse; }
+th { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--white-muted); letter-spacing:0.1em; padding:12px 16px; text-align:left; border-bottom:1px solid var(--border); background:var(--black-4); }
+td { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--white-dim); padding:12px 16px; border-bottom:1px solid var(--border); }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(170,255,0,0.02); }
+.badge-free { background:rgba(255,255,255,0.05); color:var(--white-muted); border:1px solid var(--border-bright); padding:2px 8px; border-radius:2px; font-size:0.6rem; }
+.badge-pro { background:rgba(170,255,0,0.1); color:var(--green); border:1px solid rgba(170,255,0,0.2); padding:2px 8px; border-radius:2px; font-size:0.6rem; }
+.loading { text-align:center; padding:32px; font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--white-muted); }
+
+/* REFRESH BTN */
+.refresh-btn { background:transparent; border:1px solid var(--border-bright); color:var(--white-muted); padding:8px 16px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:0.7rem; cursor:pointer; transition:all 0.2s; letter-spacing:0.08em; }
+.refresh-btn:hover { border-color:var(--green); color:var(--green); }
+</style>
 </head>
-<body class="chat-page">
+<body>
 <div class="noise"></div>
 
-<div class="chat-topbar">
-  <a href="../index.html" class="topbar-logo">
+<nav class="nav">
+  <a href="../index.html" class="nav-logo">
     <img src="../logo.webp" alt="Aultron AI" class="nav-logo-img">
     AULTRON<span>.</span>AI
   </a>
-  <div class="a9-badge">
-    <span class="a9-dot"></span>
-    A9 ONLINE
+  <div class="nav-links">
+    <a href="chat.html">← Back to Chat</a>
   </div>
-  <div class="topbar-right">
-    <button class="icon-btn" onclick="newChat()">+</button>
-    <button class="icon-btn" onclick="doLogout()">↪</button>
+</nav>
+
+<div class="admin-wrap">
+  <div class="admin-header">
+    <div class="admin-title">ADMIN <span>PANEL</span></div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="admin-badge">⬡ AULTRON ADMIN</div>
+      <button class="refresh-btn" onclick="loadAll()">↺ REFRESH</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-val" id="totalUsers">—</div>
+      <div class="stat-card-label">TOTAL USERS</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-val" id="totalChats">—</div>
+      <div class="stat-card-label">TOTAL CHATS</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-val" id="proUsers">—</div>
+      <div class="stat-card-label">PRO USERS</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-val" id="todayUsers">—</div>
+      <div class="stat-card-label">NEW TODAY</div>
+    </div>
+  </div>
+
+  <!-- USERS TABLE -->
+  <div class="section-title">// <span>ALL USERS</span></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>NAME</th>
+          <th>EMAIL</th>
+          <th>PLAN</th>
+          <th>JOINED</th>
+          <th>CHATS</th>
+        </tr>
+      </thead>
+      <tbody id="usersTable">
+        <tr><td colspan="5" class="loading">Loading users...</td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
-
-<div class="chat-layout">
-  <div class="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-title">// HISTORY</div>
-      <button class="new-chat-btn" onclick="newChat()">+ NEW</button>
-    </div>
-    <div class="sidebar-chats" id="sidebarChats">
-      <div class="sidebar-empty">No chats yet.<br>Start a conversation!</div>
-    </div>
-  </div>
-
-  <div class="chat-main">
-    <div class="chat-messages" id="chatMessages">
-      <div class="chat-welcome" id="welcomeScreen">
-        <div class="welcome-glyph">A9</div>
-        <div class="welcome-h">AULTRON AI</div>
-        <div class="welcome-p">Meet A9 — your intelligent AI assistant.<br>Ask anything. Get instant answers.</div>
-        <div class="welcome-chips">
-          <div class="w-chip" onclick="quickMsg('Explain quantum computing simply')">Explain quantum computing</div>
-          <div class="w-chip" onclick="quickMsg('Write a Python function to reverse a string')">Python string reverse</div>
-          <div class="w-chip" onclick="quickMsg('Give me 5 startup ideas for 2025')">Startup ideas 2025</div>
-          <div class="w-chip" onclick="quickMsg('Write a short poem about AI')">AI poem</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="chat-input-bar">
-      <div class="input-wrap">
-        <div class="input-model-badge">A9</div>
-        <textarea id="msgInput" placeholder="Message A9..." rows="1" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
-        <button class="send-btn" id="sendBtn" onclick="sendMessage()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-        </button>
-      </div>
-      <div class="input-hint">Enter to send · Shift+Enter for new line · Powered by A9</div>
-    </div>
-  </div>
-</div>
-
-<style>
-.a9-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: var(--green);
-  border: 1px solid rgba(170,255,0,0.3);
-  padding: 6px 14px;
-  border-radius: 4px;
-  background: rgba(170,255,0,0.05);
-}
-.a9-dot {
-  width: 7px;
-  height: 7px;
-  background: var(--green);
-  border-radius: 50%;
-  box-shadow: 0 0 8px var(--green);
-  animation: blink 1.5s infinite;
-}
-.welcome-glyph {
-  font-family: 'Orbitron', sans-serif !important;
-  font-size: 2.5rem !important;
-  font-weight: 900 !important;
-  color: var(--green) !important;
-  text-shadow: 0 0 30px rgba(170,255,0,0.5) !important;
-}
-.a9-label {
-  background: rgba(170,255,0,0.08);
-  color: var(--green);
-  border: 1px solid rgba(170,255,0,0.2);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  padding: 2px 8px;
-  border-radius: 2px;
-  align-self: flex-start;
-}
-</style>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, orderBy, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { firebaseConfig, BACKEND_URL } from "../js/config.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { firebaseConfig } from "../js/config.js";
+
+  // ⚠️ REPLACE WITH YOUR EMAIL
+  const ADMIN_EMAIL = "ayaangond23@gmail.com";
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  let isLoading = false;
-  let msgHistory = [];
-  let currentChatId = null;
-  let currentUser = null;
-
-  async function getToken() {
-    if (!currentUser) return null;
-    try { return await currentUser.getIdToken(true); } catch { return null; }
-  }
-
+  // AUTH GUARD — only admin!
   onAuthStateChanged(auth, async user => {
     if (!user) { window.location.href = 'login.html'; return; }
-    currentUser = user;
-    const el = document.querySelector('.welcome-h');
-    if (el) el.textContent = `HEY ${(user.displayName || 'USER').toUpperCase()}!`;
-    await loadHistory();
+    if (user.email !== ADMIN_EMAIL) {
+      alert('Access denied! Admins only.');
+      window.location.href = 'chat.html';
+      return;
+    }
+    await loadAll();
   });
 
-  window.sendMessage = async function() {
-    if (isLoading) return;
-    const input = document.getElementById('msgInput');
-    const text = input.value.trim();
-    if (!text) return;
-
-    input.value = '';
-    input.style.height = 'auto';
-    isLoading = true;
-    document.getElementById('sendBtn').disabled = true;
-
-    const welcome = document.getElementById('welcomeScreen');
-    if (welcome) welcome.remove();
-
-    msgHistory.push({ role: 'user', content: text });
-    addMsg('user', text, true);
-    const typingId = addTyping();
-
+  window.loadAll = async function() {
     try {
-      const token = await getToken();
-      const res = await fetch(`${BACKEND_URL}/api/a9`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          messages: msgHistory.map(m => ({ role: m.role, content: m.content }))
-        })
-      });
+      const usersSnap = await getDocs(collection(db, 'users'));
+      const users = [];
+      let totalChats = 0;
+      let proCount = 0;
+      let todayCount = 0;
+      const today = new Date();
+      today.setHours(0,0,0,0);
 
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
-        throw new Error(e.error || `Error ${res.status}`);
+      for (const userDoc of usersSnap.docs) {
+        const data = userDoc.data();
+        // Get chat count
+        const chatsSnap = await getDocs(collection(db, 'users', userDoc.id, 'chats'));
+        const chatCount = chatsSnap.size;
+        totalChats += chatCount;
+        if (data.plan === 'pro') proCount++;
+        if (data.createdAt?.toDate() >= today) todayCount++;
+        users.push({ ...data, id: userDoc.id, chatCount });
       }
 
-      removeEl(typingId);
-      const bubble = makeBubble();
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let fullText = '';
-      let buf = '';
+      // Update stats
+      document.getElementById('totalUsers').textContent = users.length;
+      document.getElementById('totalChats').textContent = totalChats;
+      document.getElementById('proUsers').textContent = proCount;
+      document.getElementById('todayUsers').textContent = todayCount;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
-          const data = line.slice(6).trim();
-          if (data === '[DONE]') break;
-          try {
-            const json = JSON.parse(data);
-            const delta = json.choices?.[0]?.delta?.content;
-            if (delta) { fullText += delta; updateBubble(bubble, fullText); }
-          } catch {}
-        }
+      // Update table
+      const tbody = document.getElementById('usersTable');
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="loading">No users yet.</td></tr>';
+        return;
       }
 
-      finalizeBubble(bubble, fullText);
-      msgHistory.push({ role: 'assistant', content: fullText });
-      await saveChat(text);
-      await loadHistory();
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td>${u.name || 'Unknown'}</td>
+          <td>${u.email || '—'}</td>
+          <td><span class="badge-${u.plan || 'free'}">${(u.plan || 'FREE').toUpperCase()}</span></td>
+          <td>${u.createdAt?.toDate().toLocaleDateString('en-IN') || '—'}</td>
+          <td>${u.chatCount}</td>
+        </tr>
+      `).join('');
 
-    } catch(err) {
-      removeEl(typingId);
-      showErr('⚠ ' + err.message);
+    } catch(e) {
+      console.error('Admin load error:', e);
+      document.getElementById('usersTable').innerHTML = '<tr><td colspan="5" class="loading">Error loading data. Check Firestore rules.</td></tr>';
     }
-
-    isLoading = false;
-    document.getElementById('sendBtn').disabled = false;
-    document.getElementById('msgInput').focus();
   };
-
-  async function saveChat(userMsg) {
-    if (!currentUser) return;
-    const title = userMsg.slice(0, 40) + (userMsg.length > 40 ? '...' : '');
-    try {
-      if (!currentChatId) {
-        const ref = await addDoc(collection(db, 'users', currentUser.uid, 'chats'), {
-          title, messages: msgHistory, createdAt: serverTimestamp(), updatedAt: serverTimestamp()
-        });
-        currentChatId = ref.id;
-      } else {
-        await updateDoc(doc(db, 'users', currentUser.uid, 'chats', currentChatId), {
-          messages: msgHistory, updatedAt: serverTimestamp()
-        });
-      }
-    } catch(e) { console.error(e); }
-  }
-
-  async function loadHistory() {
-    if (!currentUser) return;
-    try {
-      const q = query(collection(db, 'users', currentUser.uid, 'chats'), orderBy('updatedAt', 'desc'), limit(20));
-      const snap = await getDocs(q);
-      const sidebar = document.getElementById('sidebarChats');
-      if (snap.empty) { sidebar.innerHTML = '<div class="sidebar-empty">No chats yet.<br>Start a conversation!</div>'; return; }
-      sidebar.innerHTML = '';
-      snap.forEach(d => {
-        const data = d.data();
-        const el = document.createElement('div');
-        el.className = 'chat-item' + (d.id === currentChatId ? ' active' : '');
-        el.onclick = () => loadChat(d.id, data, el);
-        el.innerHTML = `<div class="chat-item-title">${data.title || 'Untitled'}</div><div class="chat-item-meta">A9 · ${fmtDate(data.updatedAt?.toDate())}</div>`;
-        sidebar.appendChild(el);
-      });
-    } catch(e) { console.error(e); }
-  }
-
-  function loadChat(chatId, data, elRef) {
-    currentChatId = chatId;
-    msgHistory = data.messages || [];
-    const container = document.getElementById('chatMessages');
-    container.innerHTML = '';
-    msgHistory.forEach(m => addMsg(m.role, m.content, false));
-    document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
-    elRef.classList.add('active');
-    container.scrollTop = container.scrollHeight;
-  }
-
-  window.newChat = function() {
-    currentChatId = null; msgHistory = [];
-    document.getElementById('chatMessages').innerHTML = `
-      <div class="chat-welcome" id="welcomeScreen">
-        <div class="welcome-glyph">A9</div>
-        <div class="welcome-h">NEW CONVERSATION</div>
-        <div class="welcome-p">Start typing below.</div>
-      </div>`;
-    document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
-  };
-
-  function addMsg(role, content, animate) {
-    const container = document.getElementById('chatMessages');
-    const row = document.createElement('div');
-    row.className = `msg-row ${role} ${role === 'assistant' ? 'a9-msg' : ''}`;
-    if (!animate) row.style.animation = 'none';
-    const label = role === 'assistant' ? `<div class="a9-label">A9</div>` : '';
-    const av = role === 'user' ? 'YOU' : 'A9';
-    row.innerHTML = `<div class="msg-avatar">${av}</div><div class="msg-body">${label}<div class="msg-bubble">${esc(content).replace(/\n/g,'<br>')}</div></div>`;
-    container.appendChild(row);
-    container.scrollTop = container.scrollHeight;
-  }
-
-  function addTyping() {
-    const container = document.getElementById('chatMessages');
-    const id = 'typing_' + Date.now();
-    const row = document.createElement('div');
-    row.className = 'msg-row assistant a9-msg'; row.id = id;
-    row.innerHTML = `<div class="msg-avatar">A9</div><div class="msg-body"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
-    container.appendChild(row); container.scrollTop = container.scrollHeight;
-    return id;
-  }
-
-  function removeEl(id) { const el = document.getElementById(id); if (el) el.remove(); }
-
-  function makeBubble() {
-    const container = document.getElementById('chatMessages');
-    const row = document.createElement('div');
-    row.className = 'msg-row assistant a9-msg';
-    row.innerHTML = `<div class="msg-avatar">A9</div><div class="msg-body"><div class="a9-label">A9</div><div class="msg-bubble stream-bubble"></div></div>`;
-    container.appendChild(row); container.scrollTop = container.scrollHeight;
-    return row.querySelector('.stream-bubble');
-  }
-
-  function updateBubble(bubble, text) {
-    bubble.innerHTML = esc(text).replace(/\n/g,'<br>') + '<span class="stream-cursor"></span>';
-    document.getElementById('chatMessages').scrollTop = 99999;
-  }
-
-  function finalizeBubble(bubble, text) { bubble.innerHTML = esc(text).replace(/\n/g,'<br>'); }
-
-  function showErr(msg) {
-    const el = document.createElement('div');
-    el.style.cssText = 'text-align:center;font-family:JetBrains Mono,monospace;font-size:0.75rem;color:#ff6b6b;padding:12px;border:1px solid rgba(255,100,100,0.2);border-radius:6px;margin:8px auto;max-width:400px;';
-    el.textContent = msg;
-    document.getElementById('chatMessages').appendChild(el);
-  }
-
-  function esc(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function fmtDate(date) { if (!date) return ''; return date.toLocaleDateString('en-IN',{day:'numeric',month:'short'}); }
-
-  window.doLogout = async function() { await signOut(auth); localStorage.clear(); window.location.href = '../index.html'; };
-  window.quickMsg = function(text) { document.getElementById('msgInput').value = text; window.sendMessage(); };
-  window.autoResize = function(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 140) + 'px'; };
-  window.handleKey = function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); window.sendMessage(); } };
 </script>
 </body>
 </html>
