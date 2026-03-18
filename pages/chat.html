@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,26 +7,20 @@
 <title>Chat — Aultron AI</title>
 <link rel="stylesheet" href="../css/global.css">
 <link rel="stylesheet" href="../css/chat.css">
-<style>
-  .sw-btn.gemini.active { background: #4285f4 !important; color: #fff !important; box-shadow: 0 0 14px rgba(66,133,244,0.4); }
-  .free-badge { font-size: 0.5rem; background: var(--green); color: var(--black); padding: 1px 5px; border-radius: 3px; font-weight: 700; letter-spacing: 0.05em; margin-left: 3px; vertical-align: middle; }
-  .gemini-msg .msg-avatar { background: rgba(66,133,244,0.1) !important; color: #4285f4 !important; border-color: rgba(66,133,244,0.3) !important; }
-  .gemini-msg .msg-bubble { border-color: rgba(66,133,244,0.15) !important; }
-  .gemini-label { background: rgba(66,133,244,0.08) !important; color: #4285f4 !important; border: 1px solid rgba(66,133,244,0.2) !important; }
-</style>
 </head>
 <body class="chat-page">
 <div class="noise"></div>
 
 <div class="chat-topbar">
-  <a href="../index.html" class="topbar-logo"><img src="../logo.webp" alt="Aultron AI" class="nav-logo-img">AULTRON<span>.</span>AI</a>
-  <div class="model-switcher">
-    <button class="sw-btn gemini active" id="geminiBtn" onclick="switchModel('gemini')">◆ GEMINI <span class="free-badge">FREE</span></button>
-    <button class="sw-btn" id="claudeBtn" onclick="switchModel('claude')">⬡ CLAUDE</button>
-    <button class="sw-btn" id="gptBtn" onclick="switchModel('gpt')">✦ GPT-4o</button>
+  <a href="../index.html" class="topbar-logo">
+    <img src="../logo.webp" alt="Aultron AI" class="nav-logo-img">
+    AULTRON<span>.</span>AI
+  </a>
+  <div class="a9-badge">
+    <span class="a9-dot"></span>
+    A9 ONLINE
   </div>
   <div class="topbar-right">
-    <div class="model-pill" id="modelPill">gemini-1.5-flash</div>
     <button class="icon-btn" onclick="newChat()">+</button>
     <button class="icon-btn" onclick="doLogout()">↪</button>
   </div>
@@ -47,9 +40,9 @@
   <div class="chat-main">
     <div class="chat-messages" id="chatMessages">
       <div class="chat-welcome" id="welcomeScreen">
-        <div class="welcome-glyph">◆</div>
+        <div class="welcome-glyph">A9</div>
         <div class="welcome-h">AULTRON AI</div>
-        <div class="welcome-p">Three AI models. One conversation.<br>◆ Gemini is FREE — switch anytime!</div>
+        <div class="welcome-p">Meet A9 — your intelligent AI assistant.<br>Ask anything. Get instant answers.</div>
         <div class="welcome-chips">
           <div class="w-chip" onclick="quickMsg('Explain quantum computing simply')">Explain quantum computing</div>
           <div class="w-chip" onclick="quickMsg('Write a Python function to reverse a string')">Python string reverse</div>
@@ -58,18 +51,62 @@
         </div>
       </div>
     </div>
+
     <div class="chat-input-bar">
       <div class="input-wrap">
-        <div class="input-model-badge" id="inputBadge">◆ GEMINI</div>
-        <textarea id="msgInput" placeholder="Message Aultron AI..." rows="1" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
+        <div class="input-model-badge">A9</div>
+        <textarea id="msgInput" placeholder="Message A9..." rows="1" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendMessage()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
-      <div class="input-hint">Enter to send · Shift+Enter for new line · ◆ Gemini is FREE!</div>
+      <div class="input-hint">Enter to send · Shift+Enter for new line · Powered by A9</div>
     </div>
   </div>
 </div>
+
+<style>
+.a9-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--green);
+  border: 1px solid rgba(170,255,0,0.3);
+  padding: 6px 14px;
+  border-radius: 4px;
+  background: rgba(170,255,0,0.05);
+}
+.a9-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--green);
+  animation: blink 1.5s infinite;
+}
+.welcome-glyph {
+  font-family: 'Orbitron', sans-serif !important;
+  font-size: 2.5rem !important;
+  font-weight: 900 !important;
+  color: var(--green) !important;
+  text-shadow: 0 0 30px rgba(170,255,0,0.5) !important;
+}
+.a9-label {
+  background: rgba(170,255,0,0.08);
+  color: var(--green);
+  border: 1px solid rgba(170,255,0,0.2);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border-radius: 2px;
+  align-self: flex-start;
+}
+</style>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -81,25 +118,16 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  let currentModel = 'gemini';
   let isLoading = false;
   let msgHistory = [];
   let currentChatId = null;
   let currentUser = null;
-
-  // Model info helper
-  function getInfo(model) {
-    if (model === 'claude') return { av:'⬡', cls:'claude-msg', lCls:'claude-label', lTxt:'CLAUDE' };
-    if (model === 'gpt') return { av:'✦', cls:'gpt-msg', lCls:'gpt-label', lTxt:'GPT-4o' };
-    return { av:'◆', cls:'gemini-msg', lCls:'gemini-label', lTxt:'GEMINI' };
-  }
 
   async function getToken() {
     if (!currentUser) return null;
     try { return await currentUser.getIdToken(true); } catch { return null; }
   }
 
-  // AUTH GUARD
   onAuthStateChanged(auth, async user => {
     if (!user) { window.location.href = 'login.html'; return; }
     currentUser = user;
@@ -108,29 +136,6 @@
     await loadHistory();
   });
 
-  // MODEL SWITCH
-  window.switchModel = function(model) {
-    currentModel = model;
-    document.getElementById('geminiBtn').classList.remove('active');
-    document.getElementById('claudeBtn').classList.remove('active');
-    document.getElementById('gptBtn').classList.remove('active');
-
-    if (model === 'gemini') {
-      document.getElementById('geminiBtn').classList.add('active');
-      document.getElementById('modelPill').textContent = 'gemini-1.5-flash';
-      document.getElementById('inputBadge').textContent = '◆ GEMINI';
-    } else if (model === 'claude') {
-      document.getElementById('claudeBtn').classList.add('active');
-      document.getElementById('modelPill').textContent = 'claude-sonnet-4';
-      document.getElementById('inputBadge').textContent = '⬡ CLAUDE';
-    } else {
-      document.getElementById('gptBtn').classList.add('active');
-      document.getElementById('modelPill').textContent = 'gpt-4o';
-      document.getElementById('inputBadge').textContent = '✦ GPT-4o';
-    }
-  };
-
-  // SEND MESSAGE
   window.sendMessage = async function() {
     if (isLoading) return;
     const input = document.getElementById('msgInput');
@@ -146,12 +151,12 @@
     if (welcome) welcome.remove();
 
     msgHistory.push({ role: 'user', content: text });
-    addMsg('user', text, currentModel, true);
+    addMsg('user', text, true);
     const typingId = addTyping();
 
     try {
       const token = await getToken();
-      const res = await fetch(`${BACKEND_URL}/api/${currentModel}`, {
+      const res = await fetch(`${BACKEND_URL}/api/a9`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -164,11 +169,11 @@
 
       if (!res.ok) {
         const e = await res.json().catch(() => ({}));
-        throw new Error(e.error || `Server error: ${res.status}`);
+        throw new Error(e.error || `Error ${res.status}`);
       }
 
       removeEl(typingId);
-      const bubble = makeBubble(currentModel);
+      const bubble = makeBubble();
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let fullText = '';
@@ -183,15 +188,9 @@
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const data = line.slice(6).trim();
-          if (data === '[DONE]') continue;
+          if (data === '[DONE]') break;
           try {
             const json = JSON.parse(data);
-            // Claude
-            if (json.type === 'content_block_delta' && json.delta?.text) {
-              fullText += json.delta.text;
-              updateBubble(bubble, fullText);
-            }
-            // GPT + Gemini
             const delta = json.choices?.[0]?.delta?.content;
             if (delta) { fullText += delta; updateBubble(bubble, fullText); }
           } catch {}
@@ -199,14 +198,13 @@
       }
 
       finalizeBubble(bubble, fullText);
-      msgHistory.push({ role: 'assistant', content: fullText, model: currentModel });
+      msgHistory.push({ role: 'assistant', content: fullText });
       await saveChat(text);
       await loadHistory();
 
     } catch(err) {
       removeEl(typingId);
       showErr('⚠ ' + err.message);
-      console.error(err);
     }
 
     isLoading = false;
@@ -214,23 +212,21 @@
     document.getElementById('msgInput').focus();
   };
 
-  // FIRESTORE
   async function saveChat(userMsg) {
     if (!currentUser) return;
     const title = userMsg.slice(0, 40) + (userMsg.length > 40 ? '...' : '');
     try {
       if (!currentChatId) {
         const ref = await addDoc(collection(db, 'users', currentUser.uid, 'chats'), {
-          title, model: currentModel, messages: msgHistory,
-          createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+          title, messages: msgHistory, createdAt: serverTimestamp(), updatedAt: serverTimestamp()
         });
         currentChatId = ref.id;
       } else {
         await updateDoc(doc(db, 'users', currentUser.uid, 'chats', currentChatId), {
-          messages: msgHistory, model: currentModel, updatedAt: serverTimestamp()
+          messages: msgHistory, updatedAt: serverTimestamp()
         });
       }
-    } catch(e) { console.error('Save error:', e); }
+    } catch(e) { console.error(e); }
   }
 
   async function loadHistory() {
@@ -246,10 +242,10 @@
         const el = document.createElement('div');
         el.className = 'chat-item' + (d.id === currentChatId ? ' active' : '');
         el.onclick = () => loadChat(d.id, data, el);
-        el.innerHTML = `<div class="chat-item-title">${data.title || 'Untitled'}</div><div class="chat-item-meta">${(data.model||'gemini').toUpperCase()} · ${fmtDate(data.updatedAt?.toDate())}</div>`;
+        el.innerHTML = `<div class="chat-item-title">${data.title || 'Untitled'}</div><div class="chat-item-meta">A9 · ${fmtDate(data.updatedAt?.toDate())}</div>`;
         sidebar.appendChild(el);
       });
-    } catch(e) { console.error('Load error:', e); }
+    } catch(e) { console.error(e); }
   }
 
   function loadChat(chatId, data, elRef) {
@@ -257,7 +253,7 @@
     msgHistory = data.messages || [];
     const container = document.getElementById('chatMessages');
     container.innerHTML = '';
-    msgHistory.forEach(m => addMsg(m.role, m.content, m.model || 'gemini', false));
+    msgHistory.forEach(m => addMsg(m.role, m.content, false));
     document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
     elRef.classList.add('active');
     container.scrollTop = container.scrollHeight;
@@ -265,19 +261,23 @@
 
   window.newChat = function() {
     currentChatId = null; msgHistory = [];
-    document.getElementById('chatMessages').innerHTML = `<div class="chat-welcome" id="welcomeScreen"><div class="welcome-glyph">◆</div><div class="welcome-h">NEW CONVERSATION</div><div class="welcome-p">Start typing below.</div></div>`;
+    document.getElementById('chatMessages').innerHTML = `
+      <div class="chat-welcome" id="welcomeScreen">
+        <div class="welcome-glyph">A9</div>
+        <div class="welcome-h">NEW CONVERSATION</div>
+        <div class="welcome-p">Start typing below.</div>
+      </div>`;
     document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
   };
 
-  // DOM HELPERS
-  function addMsg(role, content, model, animate) {
+  function addMsg(role, content, animate) {
     const container = document.getElementById('chatMessages');
-    const { av, cls, lCls, lTxt } = getInfo(model);
     const row = document.createElement('div');
-    row.className = `msg-row ${role} ${role === 'assistant' ? cls : ''}`;
+    row.className = `msg-row ${role} ${role === 'assistant' ? 'a9-msg' : ''}`;
     if (!animate) row.style.animation = 'none';
-    const label = role === 'assistant' ? `<div class="msg-label ${lCls}">${lTxt}</div>` : '';
-    row.innerHTML = `<div class="msg-avatar">${role==='user'?'YOU':av}</div><div class="msg-body">${label}<div class="msg-bubble">${esc(content).replace(/\n/g,'<br>')}</div></div>`;
+    const label = role === 'assistant' ? `<div class="a9-label">A9</div>` : '';
+    const av = role === 'user' ? 'YOU' : 'A9';
+    row.innerHTML = `<div class="msg-avatar">${av}</div><div class="msg-body">${label}<div class="msg-bubble">${esc(content).replace(/\n/g,'<br>')}</div></div>`;
     container.appendChild(row);
     container.scrollTop = container.scrollHeight;
   }
@@ -285,22 +285,20 @@
   function addTyping() {
     const container = document.getElementById('chatMessages');
     const id = 'typing_' + Date.now();
-    const { av, cls } = getInfo(currentModel);
     const row = document.createElement('div');
-    row.className = `msg-row assistant ${cls}`; row.id = id;
-    row.innerHTML = `<div class="msg-avatar">${av}</div><div class="msg-body"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
+    row.className = 'msg-row assistant a9-msg'; row.id = id;
+    row.innerHTML = `<div class="msg-avatar">A9</div><div class="msg-body"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
     container.appendChild(row); container.scrollTop = container.scrollHeight;
     return id;
   }
 
   function removeEl(id) { const el = document.getElementById(id); if (el) el.remove(); }
 
-  function makeBubble(model) {
+  function makeBubble() {
     const container = document.getElementById('chatMessages');
-    const { av, cls, lCls, lTxt } = getInfo(model);
     const row = document.createElement('div');
-    row.className = `msg-row assistant ${cls}`;
-    row.innerHTML = `<div class="msg-avatar">${av}</div><div class="msg-body"><div class="msg-label ${lCls}">${lTxt}</div><div class="msg-bubble stream-bubble"></div></div>`;
+    row.className = 'msg-row assistant a9-msg';
+    row.innerHTML = `<div class="msg-avatar">A9</div><div class="msg-body"><div class="a9-label">A9</div><div class="msg-bubble stream-bubble"></div></div>`;
     container.appendChild(row); container.scrollTop = container.scrollHeight;
     return row.querySelector('.stream-bubble');
   }
@@ -317,7 +315,6 @@
     el.style.cssText = 'text-align:center;font-family:JetBrains Mono,monospace;font-size:0.75rem;color:#ff6b6b;padding:12px;border:1px solid rgba(255,100,100,0.2);border-radius:6px;margin:8px auto;max-width:400px;';
     el.textContent = msg;
     document.getElementById('chatMessages').appendChild(el);
-    document.getElementById('chatMessages').scrollTop = 99999;
   }
 
   function esc(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
