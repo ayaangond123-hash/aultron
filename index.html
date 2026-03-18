@@ -3,16 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aultron AI — Dual Intelligence</title>
+<title>Aultron AI — Meet A9</title>
 <link rel="icon" type="image/webp" href="logo.webp">
 <link rel="stylesheet" href="css/global.css">
 <link rel="stylesheet" href="css/landing.css">
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#AAFF00">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Aultron AI">
 </head>
 <body>
-
-<!-- CURSOR -->
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
 <div class="noise"></div>
 <div class="scanlines"></div>
 
@@ -24,7 +26,7 @@
   </a>
   <div class="nav-links">
     <a href="#features">Features</a>
-    <a href="#models">Models</a>
+    <a href="#a9">A9</a>
     <a href="#pricing">Pricing</a>
     <a href="pages/login.html" class="nav-cta">LAUNCH APP →</a>
   </div>
@@ -33,38 +35,33 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-grid-bg"></div>
-
   <div class="hero-content">
     <div class="hero-chip">
       <span class="chip-dot"></span>
-      DUAL INTELLIGENCE ENGINE — ONLINE
+      A9 INTELLIGENCE ENGINE — ONLINE
     </div>
-
     <h1 class="hero-title">
-      THE AI THAT<br>
-      <span class="hero-green">NEVER</span><br>
-      <span class="hero-outline">LIMITS YOU</span>
+      MEET<br>
+      <span class="hero-green">A9.</span><br>
+      <span class="hero-outline">YOUR AI.</span>
     </h1>
-
     <p class="hero-desc">
-      Switch between Claude and GPT-4o mid-conversation.<br>
-      Two AI brains. One powerful interface. Built for serious users.
+      A9 is Aultron's powerful AI engine.<br>
+      Ask anything. Get instant answers. Built for serious users.
     </p>
-
     <div class="hero-actions">
       <a href="pages/signup.html" class="btn-primary">GET STARTED FREE →</a>
       <a href="pages/login.html" class="btn-outline">SIGN IN</a>
     </div>
-
     <div class="hero-stats">
       <div class="stat">
-        <div class="stat-val">2</div>
-        <div class="stat-label">AI MODELS</div>
+        <div class="stat-val">A9</div>
+        <div class="stat-label">AI ENGINE</div>
       </div>
       <div class="stat-sep"></div>
       <div class="stat">
-        <div class="stat-val">1</div>
-        <div class="stat-label">INTERFACE</div>
+        <div class="stat-val">24/7</div>
+        <div class="stat-label">ONLINE</div>
       </div>
       <div class="stat-sep"></div>
       <div class="stat">
@@ -80,17 +77,12 @@
         <span class="t-dot red"></span>
         <span class="t-dot yellow"></span>
         <span class="t-dot green"></span>
-        <span class="t-title">aultron.ai — chat</span>
+        <span class="t-title">aultron.ai — a9 chat</span>
       </div>
       <div class="terminal-body">
-        <div class="t-line"><span class="t-prompt">USER</span> <span class="t-text">Explain black holes simply</span></div>
-        <div class="t-line t-ai"><span class="t-model claude">⬡ CLAUDE</span></div>
+        <div class="t-line"><span class="t-prompt">USER</span> <span class="t-text">What can you do?</span></div>
+        <div class="t-line t-ai"><span class="t-model gpt">A9 · AULTRON AI</span></div>
         <div class="t-line t-response" id="typedText"></div>
-        <div class="t-line t-switch">
-          <span class="t-tag">→ switching to GPT-4o...</span>
-        </div>
-        <div class="t-line"><span class="t-prompt">USER</span> <span class="t-text">Now give me a poem about it</span></div>
-        <div class="t-line t-ai"><span class="t-model gpt">✦ GPT-4o</span></div>
         <div class="t-cursor-line"><span class="t-blink">█</span></div>
       </div>
     </div>
@@ -101,18 +93,18 @@
 <!-- MARQUEE -->
 <div class="marquee-wrap">
   <div class="marquee-track">
-    <span>CLAUDE SONNET</span><em>◆</em>
-    <span>GPT-4o</span><em>◆</em>
-    <span>REAL-TIME STREAMING</span><em>◆</em>
+    <span>A9 ENGINE</span><em>◆</em>
     <span>AULTRON AI</span><em>◆</em>
-    <span>SWITCH ANYTIME</span><em>◆</em>
-    <span>SAVE HISTORY</span><em>◆</em>
-    <span>CLAUDE SONNET</span><em>◆</em>
-    <span>GPT-4o</span><em>◆</em>
     <span>REAL-TIME STREAMING</span><em>◆</em>
+    <span>CHAT HISTORY</span><em>◆</em>
+    <span>SECURE LOGIN</span><em>◆</em>
+    <span>ALWAYS ONLINE</span><em>◆</em>
+    <span>A9 ENGINE</span><em>◆</em>
     <span>AULTRON AI</span><em>◆</em>
-    <span>SWITCH ANYTIME</span><em>◆</em>
-    <span>SAVE HISTORY</span><em>◆</em>
+    <span>REAL-TIME STREAMING</span><em>◆</em>
+    <span>CHAT HISTORY</span><em>◆</em>
+    <span>SECURE LOGIN</span><em>◆</em>
+    <span>ALWAYS ONLINE</span><em>◆</em>
   </div>
 </div>
 
@@ -124,69 +116,52 @@
     <div class="features-grid">
       <div class="feat-card" data-reveal>
         <div class="feat-num">01</div>
-        <div class="feat-icon">⬡</div>
-        <h3>Model Switching</h3>
-        <p>Toggle between Claude and GPT-4o with one click. Same context. Different brain. No conversation lost.</p>
+        <div class="feat-icon">A9</div>
+        <h3>A9 Engine</h3>
+        <p>Aultron's proprietary A9 AI engine delivers fast, intelligent responses to any question.</p>
       </div>
       <div class="feat-card" data-reveal>
         <div class="feat-num">02</div>
         <div class="feat-icon">▶</div>
         <h3>Live Streaming</h3>
-        <p>Responses stream character by character, just like ChatGPT. No waiting for full replies.</p>
+        <p>Responses stream character by character in real time. No waiting for full replies.</p>
       </div>
       <div class="feat-card" data-reveal>
         <div class="feat-num">03</div>
         <div class="feat-icon">◎</div>
         <h3>Saved History</h3>
-        <p>Every conversation saved to your account via Firebase. Access your chats from any device, anytime.</p>
+        <p>Every conversation saved to your account. Access your chats from any device, anytime.</p>
       </div>
       <div class="feat-card" data-reveal>
         <div class="feat-num">04</div>
         <div class="feat-icon">⊞</div>
         <h3>Secure Accounts</h3>
-        <p>Full auth system powered by Firebase. Your data is yours. API keys stored safely, never exposed.</p>
+        <p>Full login system with Google support. Your data is yours — always safe and private.</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- MODELS SECTION -->
-<section class="models-section" id="models">
+<!-- A9 SECTION -->
+<section class="models-section" id="a9">
   <div class="models-inner">
-    <div class="section-tag">// MODELS</div>
-    <h2 class="section-heading">TWO GIANTS.<br>YOUR CHOICE.</h2>
-    <div class="models-compare">
-      <div class="model-block claude-block" data-reveal>
-        <div class="model-glyph">⬡</div>
-        <div class="model-name">CLAUDE</div>
-        <div class="model-version">Sonnet 4 · Anthropic</div>
+    <div class="section-tag">// THE ENGINE</div>
+    <h2 class="section-heading">MEET A9.</h2>
+    <div class="a9-showcase" data-reveal>
+      <div class="a9-glyph">A9</div>
+      <div class="a9-info">
+        <div class="a9-name">A9 INTELLIGENCE</div>
+        <div class="a9-sub">by Aultron AI</div>
         <div class="model-bar"></div>
         <ul class="model-list">
-          <li>Deep reasoning & analysis</li>
-          <li>Excellent at long documents</li>
-          <li>Nuanced, thoughtful replies</li>
-          <li>Best for coding & math</li>
-        </ul>
-        <div class="model-best">BEST FOR: ANALYSIS</div>
-      </div>
-
-      <div class="vs-block">
-        <div class="vs-text">VS</div>
-        <div class="vs-line"></div>
-      </div>
-
-      <div class="model-block gpt-block" data-reveal>
-        <div class="model-glyph">✦</div>
-        <div class="model-name">GPT-4o</div>
-        <div class="model-version">GPT-4o · OpenAI</div>
-        <div class="model-bar"></div>
-        <ul class="model-list">
+          <li>Advanced reasoning & analysis</li>
           <li>Creative writing & storytelling</li>
-          <li>Wide general knowledge</li>
-          <li>Fast brainstorming</li>
-          <li>Multimodal capabilities</li>
+          <li>Coding & technical help</li>
+          <li>Math & science problems</li>
+          <li>Fast real-time responses</li>
+          <li>Available 24/7</li>
         </ul>
-        <div class="model-best">BEST FOR: CREATIVITY</div>
+        <div class="model-best">AULTRON'S CORE ENGINE</div>
       </div>
     </div>
   </div>
@@ -202,10 +177,10 @@
         <div class="price-tier">FREE</div>
         <div class="price-amount">₹0<span>/mo</span></div>
         <ul class="price-list">
-          <li>✓ Claude Sonnet access</li>
-          <li>✓ GPT-4o (bring your key)</li>
-          <li>✓ 50 messages/day</li>
+          <li>✓ A9 AI access</li>
+          <li>✓ 20 messages/day</li>
           <li>✓ Save up to 10 chats</li>
+          <li>✓ Google login</li>
           <li>✗ Priority response</li>
         </ul>
         <a href="pages/signup.html" class="btn-outline" style="width:100%;justify-content:center;margin-top:auto">GET STARTED</a>
@@ -215,11 +190,11 @@
         <div class="price-tier">PRO</div>
         <div class="price-amount">₹299<span>/mo</span></div>
         <ul class="price-list">
-          <li>✓ Claude Sonnet access</li>
-          <li>✓ GPT-4o (bring your key)</li>
+          <li>✓ A9 AI access</li>
           <li>✓ Unlimited messages</li>
           <li>✓ Unlimited chat history</li>
           <li>✓ Priority response</li>
+          <li>✓ Early access to new features</li>
         </ul>
         <a href="pages/signup.html" class="btn-primary" style="width:100%;justify-content:center;margin-top:auto">START PRO →</a>
       </div>
@@ -230,9 +205,9 @@
 <!-- CTA -->
 <section class="cta-section">
   <div class="cta-inner" data-reveal>
-    <div class="cta-glyph">⬡</div>
-    <h2>READY TO USE<br><span style="color:var(--green)">BOTH AIs?</span></h2>
-    <p>Join Aultron AI and get access to Claude + GPT-4o in one clean interface. Free to start.</p>
+    <div class="cta-glyph">A9</div>
+    <h2>READY TO MEET<br><span style="color:var(--green)">A9?</span></h2>
+    <p>Join Aultron AI and get access to A9 — your intelligent AI assistant. Free to start.</p>
     <a href="pages/signup.html" class="btn-primary">CREATE FREE ACCOUNT →</a>
   </div>
 </section>
@@ -245,10 +220,19 @@
     <a href="#">Terms</a>
     <a href="https://github.com" target="_blank">GitHub</a>
   </div>
-  <div class="footer-copy">© 2025 Aultron AI · Built by Ayan</div>
+  <div class="footer-copy">© 2025 Aultron AI · Powered by A9</div>
 </footer>
 
-<script src="js/cursor.js"></script>
 <script src="js/landing.js"></script>
+<script>
+  // PWA Install
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const btn = document.getElementById('installBtn');
+    if (btn) btn.style.display = 'flex';
+  });
+</script>
 </body>
 </html>
