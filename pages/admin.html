@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Aultron AI</title>
+<link rel="icon" type="image/webp" href="../logo.webp">
+<link rel="stylesheet" href="../css/global.css">
+<style>
+body { background: var(--black); }
+.admin-wrap { max-width: 1100px; margin: 0 auto; padding: 100px 24px 40px; }
+.admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:40px; flex-wrap:wrap; gap:16px; }
+.admin-title { font-family:'Orbitron',sans-serif; font-size:1.8rem; font-weight:900; letter-spacing:0.1em; }
+.admin-title span { color:var(--green); }
+.admin-badge { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--green); border:1px solid rgba(170,255,0,0.3); padding:6px 12px; border-radius:3px; letter-spacing:0.1em; }
+
+/* STATS GRID */
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:40px; }
+.stat-card { background:var(--black-3); border:1px solid var(--border-bright); border-radius:6px; padding:24px; position:relative; overflow:hidden; }
+.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--green); }
+.stat-card-val { font-family:'Orbitron',sans-serif; font-size:2rem; font-weight:900; color:var(--green); margin-bottom:6px; }
+.stat-card-label { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--white-muted); letter-spacing:0.1em; }
+
+/* USERS TABLE */
+.section-title { font-family:'Orbitron',sans-serif; font-size:0.9rem; font-weight:700; letter-spacing:0.1em; color:var(--white); margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+.section-title span { color:var(--green); }
+.table-wrap { background:var(--black-3); border:1px solid var(--border-bright); border-radius:6px; overflow:hidden; margin-bottom:32px; overflow-x:auto; }
+table { width:100%; border-collapse:collapse; }
+th { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--white-muted); letter-spacing:0.1em; padding:12px 16px; text-align:left; border-bottom:1px solid var(--border); background:var(--black-4); }
+td { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--white-dim); padding:12px 16px; border-bottom:1px solid var(--border); }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:rgba(170,255,0,0.02); }
+.badge-free { background:rgba(255,255,255,0.05); color:var(--white-muted); border:1px solid var(--border-bright); padding:2px 8px; border-radius:2px; font-size:0.6rem; }
+.badge-pro { background:rgba(170,255,0,0.1); color:var(--green); border:1px solid rgba(170,255,0,0.2); padding:2px 8px; border-radius:2px; font-size:0.6rem; }
+.loading { text-align:center; padding:32px; font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--white-muted); }
+
+/* REFRESH BTN */
+.refresh-btn { background:transparent; border:1px solid var(--border-bright); color:var(--white-muted); padding:8px 16px; border-radius:4px; font-family:'JetBrains Mono',monospace; font-size:0.7rem; cursor:pointer; transition:all 0.2s; letter-spacing:0.08em; }
+.refresh-btn:hover { border-color:var(--green); color:var(--green); }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+
+<nav class="nav">
+  <a href="../index.html" class="nav-logo">
+    <img src="../logo.webp" alt="Aultron AI" class="nav-logo-img">
+    AULTRON<span>.</span>AI
+  </a>
+  <div class="nav-links">
+    <a href="chat.html">← Back to Chat</a>
+  </div>
+</nav>
+
+<div class="admin-wrap">
+  <div class="admin-header">
+    <div class="admin-title">ADMIN <span>PANEL</span></div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="admin-badge">⬡ AULTRON ADMIN</div>
+      <button class="refresh-btn" onclick="loadAll()">↺ REFRESH</button>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-val" id="totalUsers">—</div>
+      <div class="stat-card-label">TOTAL USERS</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-val" id="totalChats">—</div>
+      <div class="stat-card-label">TOTAL CHATS</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-val" id="proUsers">—</div>
+      <div class="stat-card-label">PRO USERS</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-val" id="todayUsers">—</div>
+      <div class="stat-card-label">NEW TODAY</div>
+    </div>
+  </div>
+
+  <!-- USERS TABLE -->
+  <div class="section-title">// <span>ALL USERS</span></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>NAME</th>
+          <th>EMAIL</th>
+          <th>PLAN</th>
+          <th>JOINED</th>
+          <th>CHATS</th>
+        </tr>
+      </thead>
+      <tbody id="usersTable">
+        <tr><td colspan="5" class="loading">Loading users...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { firebaseConfig } from "../js/config.js";
+
+  // ⚠️ REPLACE WITH YOUR EMAIL
+  const ADMIN_EMAIL = "ayaangond123@gmail.com";
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // AUTH GUARD — only admin!
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    if (user.email !== ADMIN_EMAIL) {
+      alert('Access denied! Admins only.');
+      window.location.href = 'chat.html';
+      return;
+    }
+    await loadAll();
+  });
+
+  window.loadAll = async function() {
+    try {
+      const usersSnap = await getDocs(collection(db, 'users'));
+      const users = [];
+      let totalChats = 0;
+      let proCount = 0;
+      let todayCount = 0;
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      for (const userDoc of usersSnap.docs) {
+        const data = userDoc.data();
+        // Get chat count
+        const chatsSnap = await getDocs(collection(db, 'users', userDoc.id, 'chats'));
+        const chatCount = chatsSnap.size;
+        totalChats += chatCount;
+        if (data.plan === 'pro') proCount++;
+        if (data.createdAt?.toDate() >= today) todayCount++;
+        users.push({ ...data, id: userDoc.id, chatCount });
+      }
+
+      // Update stats
+      document.getElementById('totalUsers').textContent = users.length;
+      document.getElementById('totalChats').textContent = totalChats;
+      document.getElementById('proUsers').textContent = proCount;
+      document.getElementById('todayUsers').textContent = todayCount;
+
+      // Update table
+      const tbody = document.getElementById('usersTable');
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="loading">No users yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td>${u.name || 'Unknown'}</td>
+          <td>${u.email || '—'}</td>
+          <td><span class="badge-${u.plan || 'free'}">${(u.plan || 'FREE').toUpperCase()}</span></td>
+          <td>${u.createdAt?.toDate().toLocaleDateString('en-IN') || '—'}</td>
+          <td>${u.chatCount}</td>
+        </tr>
+      `).join('');
+
+    } catch(e) {
+      console.error('Admin load error:', e);
+      document.getElementById('usersTable').innerHTML = '<tr><td colspan="5" class="loading">Error loading data. Check Firestore rules.</td></tr>';
+    }
+  };
+</script>
+</body>
+</html>
