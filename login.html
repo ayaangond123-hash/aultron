@@ -7,60 +7,29 @@
 <link rel="icon" type="image/webp" href="../logo.webp">
 <link rel="stylesheet" href="../css/global.css">
 <style>
-.btn-google {
-  width: 100%;
-  padding: 14px;
-  background: transparent;
-  color: var(--white);
-  border: 1px solid var(--border-bright);
-  border-radius: 4px;
-  font-family: 'Sora', sans-serif;
-  font-size: 0.88rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 4px;
-}
-.btn-google:hover { border-color: var(--green); color: var(--green); }
-.btn-google img { width: 18px; height: 18px; }
+.btn-google { width:100%; padding:14px; background:transparent; color:var(--white); border:1px solid var(--border-bright); border-radius:4px; font-family:'Sora',sans-serif; font-size:0.88rem; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:4px; }
+.btn-google:hover { border-color:var(--green); color:var(--green); }
+.btn-google img { width:18px; height:18px; }
 </style>
 </head>
 <body>
 <div class="noise"></div>
 <div class="scanlines"></div>
-
 <nav class="nav">
-  <a href="../index.html" class="nav-logo">
-    <img src="../logo.webp" alt="Aultron AI" class="nav-logo-img">
-    AULTRON<span>.</span>AI
-  </a>
-  <div class="nav-links">
-    <a href="signup.html" class="nav-cta">CREATE ACCOUNT →</a>
-  </div>
+  <a href="../index.html" class="nav-logo"><img src="../logo.webp" alt="Aultron AI" class="nav-logo-img">AULTRON<span>.</span>AI</a>
+  <div class="nav-links"><a href="signup.html" class="nav-cta">CREATE ACCOUNT →</a></div>
 </nav>
-
 <div class="auth-wrap">
   <div class="auth-card">
-    <div class="auth-logo">
-      <img src="../logo.webp" alt="Aultron" class="auth-logo-img">
-      AULTRON<span>.</span>AI
-    </div>
-    <div class="auth-sub">Sign in to your account</div>
-
+    <div class="auth-logo"><img src="../logo.webp" alt="Aultron" class="auth-logo-img">AULTRON<span>.</span>AI</div>
+    <div class="auth-sub">Sign in to access A9</div>
     <div class="alert alert-error" id="errMsg"></div>
     <div class="alert alert-success" id="okMsg"></div>
-
-    <!-- GOOGLE BUTTON -->
     <button class="btn-google" onclick="handleGoogle()">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
       Continue with Google
     </button>
-
     <div class="form-divider">or</div>
-
     <div class="form-group">
       <label class="form-label">EMAIL ADDRESS</label>
       <input type="email" class="form-input" id="email" placeholder="you@example.com">
@@ -69,26 +38,21 @@
       <label class="form-label">PASSWORD</label>
       <input type="password" class="form-input" id="password" placeholder="••••••••">
     </div>
-
     <button class="form-btn" id="loginBtn" onclick="handleLogin()">SIGN IN →</button>
-
     <div class="form-divider">or</div>
     <div class="form-footer">No account? <a href="signup.html">Create one free</a></div>
   </div>
 </div>
-
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { firebaseConfig } from "../js/config.js";
-
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
   const googleProvider = new GoogleAuthProvider();
 
-  // GOOGLE LOGIN
   window.handleGoogle = async function() {
     const errEl = document.getElementById('errMsg');
     const okEl = document.getElementById('okMsg');
@@ -96,36 +60,23 @@
     try {
       const cred = await signInWithPopup(auth, googleProvider);
       const token = await cred.user.getIdToken();
-      // Save user to Firestore
-      await setDoc(doc(db, 'users', cred.user.uid), {
-        name: cred.user.displayName,
-        email: cred.user.email,
-        createdAt: serverTimestamp(),
-        plan: 'free'
-      }, { merge: true });
+      await setDoc(doc(db, 'users', cred.user.uid), { name: cred.user.displayName, email: cred.user.email, createdAt: serverTimestamp(), plan: 'free' }, { merge: true });
       localStorage.setItem('aultron_token', token);
       localStorage.setItem('aultron_uid', cred.user.uid);
       localStorage.setItem('aultron_name', cred.user.displayName);
-      okEl.textContent = '✓ Signed in with Google! Redirecting...';
-      okEl.style.display = 'block';
+      okEl.textContent = '✓ Signed in! Redirecting...'; okEl.style.display = 'block';
       setTimeout(() => { window.location.href = 'chat.html'; }, 1000);
-    } catch(err) {
-      errEl.textContent = '⚠ ' + err.message;
-      errEl.style.display = 'block';
-    }
+    } catch(err) { errEl.textContent = '⚠ ' + err.message; errEl.style.display = 'block'; }
   };
 
-  // EMAIL LOGIN
   window.handleLogin = async function() {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
     const errEl = document.getElementById('errMsg');
     const okEl = document.getElementById('okMsg');
     const btn = document.getElementById('loginBtn');
-
     errEl.style.display = 'none'; okEl.style.display = 'none';
     if (!email || !password) { errEl.textContent = '⚠ Fill in all fields.'; errEl.style.display = 'block'; return; }
-
     btn.textContent = 'SIGNING IN...'; btn.disabled = true;
     try {
       const cred = await signInWithEmailAndPassword(auth, email, password);
@@ -133,17 +84,14 @@
       localStorage.setItem('aultron_token', token);
       localStorage.setItem('aultron_uid', cred.user.uid);
       localStorage.setItem('aultron_name', cred.user.displayName || 'User');
-      okEl.textContent = '✓ Signed in! Redirecting...';
-      okEl.style.display = 'block';
+      okEl.textContent = '✓ Signed in! Redirecting...'; okEl.style.display = 'block';
       setTimeout(() => { window.location.href = 'chat.html'; }, 1000);
     } catch(err) {
       btn.textContent = 'SIGN IN →'; btn.disabled = false;
       const msgs = { 'auth/invalid-credential':'Wrong email or password.', 'auth/user-not-found':'No account found.', 'auth/wrong-password':'Wrong password.' };
-      errEl.textContent = '⚠ ' + (msgs[err.code] || err.message);
-      errEl.style.display = 'block';
+      errEl.textContent = '⚠ ' + (msgs[err.code] || err.message); errEl.style.display = 'block';
     }
   };
-
   document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
 </script>
 </body>
