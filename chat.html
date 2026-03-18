@@ -7,6 +7,19 @@
 <title>Chat — Aultron AI</title>
 <link rel="stylesheet" href="../css/global.css">
 <link rel="stylesheet" href="../css/chat.css">
+<style>
+.a9-badge { display:flex; align-items:center; gap:8px; font-family:'Orbitron',sans-serif; font-size:0.7rem; font-weight:700; letter-spacing:0.15em; color:var(--green); border:1px solid rgba(170,255,0,0.3); padding:6px 14px; border-radius:4px; background:rgba(170,255,0,0.05); }
+.a9-dot { width:7px; height:7px; background:var(--green); border-radius:50%; box-shadow:0 0 8px var(--green); animation:blink 1.5s infinite; }
+.msg-counter { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--white-muted); letter-spacing:0.05em; }
+.msg-counter.warning { color:#ffaa00; }
+.msg-counter.danger { color:#ff6b6b; }
+.limit-wall { text-align:center; padding:32px 20px; border:1px solid rgba(255,100,100,0.2); border-radius:8px; background:rgba(255,100,100,0.04); margin:20px auto; max-width:400px; }
+.limit-wall h3 { font-family:'Orbitron',sans-serif; font-size:1rem; color:#ff6b6b; margin-bottom:10px; letter-spacing:0.1em; }
+.limit-wall p { font-size:0.8rem; color:var(--white-muted); margin-bottom:20px; line-height:1.6; }
+.upgrade-btn { background:var(--green); color:var(--black); font-family:'Orbitron',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.1em; padding:12px 24px; border-radius:4px; border:none; cursor:pointer; }
+.welcome-glyph { font-family:'Orbitron',sans-serif !important; font-size:2.5rem !important; font-weight:900 !important; color:var(--green) !important; text-shadow:0 0 30px rgba(170,255,0,0.5) !important; }
+.a9-label { background:rgba(170,255,0,0.08); color:var(--green); border:1px solid rgba(170,255,0,0.2); font-family:'JetBrains Mono',monospace; font-size:0.62rem; letter-spacing:0.1em; padding:2px 8px; border-radius:2px; align-self:flex-start; }
+</style>
 </head>
 <body class="chat-page">
 <div class="noise"></div>
@@ -21,7 +34,9 @@
     A9 ONLINE
   </div>
   <div class="topbar-right">
+    <div class="msg-counter" id="msgCounter">20 left</div>
     <button class="icon-btn" onclick="newChat()">+</button>
+    <button class="icon-btn" onclick="goAdmin()" title="Admin" id="adminBtn" style="display:none">⚙</button>
     <button class="icon-btn" onclick="doLogout()">↪</button>
   </div>
 </div>
@@ -65,54 +80,14 @@
   </div>
 </div>
 
-<style>
-.a9-badge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: var(--green);
-  border: 1px solid rgba(170,255,0,0.3);
-  padding: 6px 14px;
-  border-radius: 4px;
-  background: rgba(170,255,0,0.05);
-}
-.a9-dot {
-  width: 7px;
-  height: 7px;
-  background: var(--green);
-  border-radius: 50%;
-  box-shadow: 0 0 8px var(--green);
-  animation: blink 1.5s infinite;
-}
-.welcome-glyph {
-  font-family: 'Orbitron', sans-serif !important;
-  font-size: 2.5rem !important;
-  font-weight: 900 !important;
-  color: var(--green) !important;
-  text-shadow: 0 0 30px rgba(170,255,0,0.5) !important;
-}
-.a9-label {
-  background: rgba(170,255,0,0.08);
-  color: var(--green);
-  border: 1px solid rgba(170,255,0,0.2);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  padding: 2px 8px;
-  border-radius: 2px;
-  align-self: flex-start;
-}
-</style>
-
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, orderBy, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, getDoc, setDoc, query, orderBy, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { firebaseConfig, BACKEND_URL } from "../js/config.js";
+
+  const ADMIN_EMAIL = "ayaangond23@gmail.com";
+  const FREE_LIMIT = 20;
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
@@ -122,15 +97,91 @@
   let msgHistory = [];
   let currentChatId = null;
   let currentUser = null;
+  let userPlan = 'free';
+  let msgsToday = 0;
 
   async function getToken() {
     if (!currentUser) return null;
     try { return await currentUser.getIdToken(true); } catch { return null; }
   }
 
+  // Get today's message count
+  async function getMsgCount() {
+    if (!currentUser) return 0;
+    const today = new Date().toISOString().split('T')[0];
+    try {
+      const ref = doc(db, 'users', currentUser.uid, 'usage', today);
+      const snap = await getDoc(ref);
+      return snap.exists() ? (snap.data().count || 0) : 0;
+    } catch { return 0; }
+  }
+
+  // Increment message count
+  async function incrementMsgCount() {
+    if (!currentUser) return;
+    const today = new Date().toISOString().split('T')[0];
+    try {
+      const ref = doc(db, 'users', currentUser.uid, 'usage', today);
+      const snap = await getDoc(ref);
+      const current = snap.exists() ? (snap.data().count || 0) : 0;
+      await setDoc(ref, { count: current + 1, date: today });
+      msgsToday = current + 1;
+      updateCounter();
+    } catch(e) { console.error(e); }
+  }
+
+  function updateCounter() {
+    const counter = document.getElementById('msgCounter');
+    if (!counter) return;
+    if (userPlan === 'pro') { counter.textContent = '∞ PRO'; counter.className = 'msg-counter'; return; }
+    const remaining = Math.max(0, FREE_LIMIT - msgsToday);
+    counter.textContent = `${remaining} left`;
+    counter.className = 'msg-counter' + (remaining <= 5 ? ' danger' : remaining <= 10 ? ' warning' : '');
+  }
+
+  function showLimitWall() {
+    const container = document.getElementById('chatMessages');
+    const welcome = document.getElementById('welcomeScreen');
+    if (welcome) welcome.remove();
+    const wall = document.createElement('div');
+    wall.className = 'limit-wall';
+    wall.innerHTML = `
+      <h3>⚡ DAILY LIMIT REACHED</h3>
+      <p>You've used all 20 free messages for today.<br>Upgrade to Pro for unlimited messages!</p>
+      <button class="upgrade-btn" onclick="alert('Pro plan coming soon! Contact us.')">UPGRADE TO PRO →</button>
+      <p style="margin-top:12px;font-size:0.72rem;color:#444;">Resets at midnight 🌙</p>
+    `;
+    container.appendChild(wall);
+    document.getElementById('sendBtn').disabled = true;
+    document.getElementById('msgInput').disabled = true;
+    document.getElementById('msgInput').placeholder = 'Daily limit reached. Upgrade to Pro!';
+  }
+
+  // AUTH GUARD
   onAuthStateChanged(auth, async user => {
     if (!user) { window.location.href = 'login.html'; return; }
     currentUser = user;
+
+    // Show admin button if admin
+    if (user.email === ADMIN_EMAIL) {
+      document.getElementById('adminBtn').style.display = 'flex';
+    }
+
+    // Get user plan
+    try {
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists()) userPlan = userDoc.data().plan || 'free';
+    } catch {}
+
+    // Get today's message count
+    msgsToday = await getMsgCount();
+    updateCounter();
+
+    // Check if already at limit
+    if (userPlan === 'free' && msgsToday >= FREE_LIMIT) {
+      showLimitWall();
+    }
+
     const el = document.querySelector('.welcome-h');
     if (el) el.textContent = `HEY ${(user.displayName || 'USER').toUpperCase()}!`;
     await loadHistory();
@@ -138,12 +189,18 @@
 
   window.sendMessage = async function() {
     if (isLoading) return;
+
+    // Check message limit
+    if (userPlan === 'free' && msgsToday >= FREE_LIMIT) {
+      showLimitWall();
+      return;
+    }
+
     const input = document.getElementById('msgInput');
     const text = input.value.trim();
     if (!text) return;
 
-    input.value = '';
-    input.style.height = 'auto';
+    input.value = ''; input.style.height = 'auto';
     isLoading = true;
     document.getElementById('sendBtn').disabled = true;
 
@@ -158,33 +215,23 @@
       const token = await getToken();
       const res = await fetch(`${BACKEND_URL}/api/a9`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          messages: msgHistory.map(m => ({ role: m.role, content: m.content }))
-        })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ messages: msgHistory.map(m => ({ role: m.role, content: m.content })) })
       });
 
-      if (!res.ok) {
-        const e = await res.json().catch(() => ({}));
-        throw new Error(e.error || `Error ${res.status}`);
-      }
+      if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || `Error ${res.status}`); }
 
       removeEl(typingId);
       const bubble = makeBubble();
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let fullText = '';
-      let buf = '';
+      let fullText = '', buf = '';
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buf += decoder.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop();
+        const lines = buf.split('\n'); buf = lines.pop();
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const data = line.slice(6).trim();
@@ -199,16 +246,24 @@
 
       finalizeBubble(bubble, fullText);
       msgHistory.push({ role: 'assistant', content: fullText });
+
+      // Increment message count
+      await incrementMsgCount();
+
+      // Check if now at limit
+      if (userPlan === 'free' && msgsToday >= FREE_LIMIT) {
+        showLimitWall();
+      }
+
       await saveChat(text);
       await loadHistory();
 
-    } catch(err) {
-      removeEl(typingId);
-      showErr('⚠ ' + err.message);
-    }
+    } catch(err) { removeEl(typingId); showErr('⚠ ' + err.message); }
 
     isLoading = false;
-    document.getElementById('sendBtn').disabled = false;
+    if (userPlan === 'pro' || msgsToday < FREE_LIMIT) {
+      document.getElementById('sendBtn').disabled = false;
+    }
     document.getElementById('msgInput').focus();
   };
 
@@ -249,8 +304,7 @@
   }
 
   function loadChat(chatId, data, elRef) {
-    currentChatId = chatId;
-    msgHistory = data.messages || [];
+    currentChatId = chatId; msgHistory = data.messages || [];
     const container = document.getElementById('chatMessages');
     container.innerHTML = '';
     msgHistory.forEach(m => addMsg(m.role, m.content, false));
@@ -261,12 +315,7 @@
 
   window.newChat = function() {
     currentChatId = null; msgHistory = [];
-    document.getElementById('chatMessages').innerHTML = `
-      <div class="chat-welcome" id="welcomeScreen">
-        <div class="welcome-glyph">A9</div>
-        <div class="welcome-h">NEW CONVERSATION</div>
-        <div class="welcome-p">Start typing below.</div>
-      </div>`;
+    document.getElementById('chatMessages').innerHTML = `<div class="chat-welcome" id="welcomeScreen"><div class="welcome-glyph">A9</div><div class="welcome-h">NEW CONVERSATION</div><div class="welcome-p">Start typing below.</div></div>`;
     document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
   };
 
@@ -276,10 +325,8 @@
     row.className = `msg-row ${role} ${role === 'assistant' ? 'a9-msg' : ''}`;
     if (!animate) row.style.animation = 'none';
     const label = role === 'assistant' ? `<div class="a9-label">A9</div>` : '';
-    const av = role === 'user' ? 'YOU' : 'A9';
-    row.innerHTML = `<div class="msg-avatar">${av}</div><div class="msg-body">${label}<div class="msg-bubble">${esc(content).replace(/\n/g,'<br>')}</div></div>`;
-    container.appendChild(row);
-    container.scrollTop = container.scrollHeight;
+    row.innerHTML = `<div class="msg-avatar">${role === 'user' ? 'YOU' : 'A9'}</div><div class="msg-body">${label}<div class="msg-bubble">${esc(content).replace(/\n/g,'<br>')}</div></div>`;
+    container.appendChild(row); container.scrollTop = container.scrollHeight;
   }
 
   function addTyping() {
@@ -303,24 +350,18 @@
     return row.querySelector('.stream-bubble');
   }
 
-  function updateBubble(bubble, text) {
-    bubble.innerHTML = esc(text).replace(/\n/g,'<br>') + '<span class="stream-cursor"></span>';
-    document.getElementById('chatMessages').scrollTop = 99999;
-  }
-
+  function updateBubble(bubble, text) { bubble.innerHTML = esc(text).replace(/\n/g,'<br>') + '<span class="stream-cursor"></span>'; document.getElementById('chatMessages').scrollTop = 99999; }
   function finalizeBubble(bubble, text) { bubble.innerHTML = esc(text).replace(/\n/g,'<br>'); }
-
   function showErr(msg) {
     const el = document.createElement('div');
     el.style.cssText = 'text-align:center;font-family:JetBrains Mono,monospace;font-size:0.75rem;color:#ff6b6b;padding:12px;border:1px solid rgba(255,100,100,0.2);border-radius:6px;margin:8px auto;max-width:400px;';
-    el.textContent = msg;
-    document.getElementById('chatMessages').appendChild(el);
+    el.textContent = msg; document.getElementById('chatMessages').appendChild(el);
   }
-
   function esc(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function fmtDate(date) { if (!date) return ''; return date.toLocaleDateString('en-IN',{day:'numeric',month:'short'}); }
 
   window.doLogout = async function() { await signOut(auth); localStorage.clear(); window.location.href = '../index.html'; };
+  window.goAdmin = function() { window.location.href = 'admin.html'; };
   window.quickMsg = function(text) { document.getElementById('msgInput').value = text; window.sendMessage(); };
   window.autoResize = function(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 140) + 'px'; };
   window.handleKey = function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); window.sendMessage(); } };
