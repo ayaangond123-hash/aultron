@@ -7,21 +7,28 @@
 <title>Chat — Aultron AI</title>
 <link rel="stylesheet" href="../css/global.css">
 <link rel="stylesheet" href="../css/chat.css">
+<style>
+  .sw-btn.gemini.active { background: #4285f4; color: #fff; box-shadow: 0 0 14px rgba(66,133,244,0.4); }
+  .free-badge { font-size: 0.5rem; background: var(--green); color: var(--black); padding: 1px 5px; border-radius: 3px; font-weight: 700; letter-spacing: 0.05em; margin-left: 3px; vertical-align: middle; }
+  .gemini-msg .msg-avatar { background: rgba(66,133,244,0.1); color: #4285f4; border-color: rgba(66,133,244,0.3); }
+  .gemini-msg .msg-bubble { border-color: rgba(66,133,244,0.15); }
+  .gemini-label { background: rgba(66,133,244,0.08); color: #4285f4; border: 1px solid rgba(66,133,244,0.2); }
+</style>
 </head>
 <body class="chat-page">
 <div class="noise"></div>
 
-<!-- TOPBAR -->
 <div class="chat-topbar">
   <a href="../index.html" class="topbar-logo"><img src="../logo.webp" alt="Aultron AI" class="nav-logo-img">AULTRON<span>.</span>AI</a>
   <div class="model-switcher">
-    <button class="sw-btn active" id="claudeBtn" onclick="switchModel('claude')">⬡ CLAUDE</button>
+    <button class="sw-btn gemini active" id="geminiBtn" onclick="switchModel('gemini')">◆ GEMINI <span class="free-badge">FREE</span></button>
+    <button class="sw-btn" id="claudeBtn" onclick="switchModel('claude')">⬡ CLAUDE</button>
     <button class="sw-btn" id="gptBtn" onclick="switchModel('gpt')">✦ GPT-4o</button>
   </div>
   <div class="topbar-right">
-    <div class="model-pill" id="modelPill">claude-sonnet-4</div>
-    <button class="icon-btn" onclick="newChat()" title="New chat">+</button>
-    <button class="icon-btn" onclick="logout()" title="Sign out">↪</button>
+    <div class="model-pill" id="modelPill">gemini-1.5-flash</div>
+    <button class="icon-btn" onclick="newChat()">+</button>
+    <button class="icon-btn" onclick="logout()">↪</button>
   </div>
 </div>
 
@@ -39,9 +46,9 @@
   <div class="chat-main">
     <div class="chat-messages" id="chatMessages">
       <div class="chat-welcome" id="welcomeScreen">
-        <div class="welcome-glyph">⬡</div>
+        <div class="welcome-glyph">◆</div>
         <div class="welcome-h">AULTRON AI</div>
-        <div class="welcome-p">Two AI models. One conversation.<br>Switch anytime, never lose context.</div>
+        <div class="welcome-p">Three AI models. One conversation.<br>Gemini is FREE — switch anytime!</div>
         <div class="welcome-chips">
           <div class="w-chip" onclick="quickMsg('Explain quantum computing simply')">Explain quantum computing</div>
           <div class="w-chip" onclick="quickMsg('Write a Python function to reverse a string')">Python string reverse</div>
@@ -50,16 +57,15 @@
         </div>
       </div>
     </div>
-
     <div class="chat-input-bar">
       <div class="input-wrap">
-        <div class="input-model-badge" id="inputBadge">⬡ CLAUDE</div>
+        <div class="input-model-badge" id="inputBadge">◆ GEMINI</div>
         <textarea id="msgInput" placeholder="Message Aultron AI..." rows="1" oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
         <button class="send-btn" id="sendBtn" onclick="sendMessage()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
       </div>
-      <div class="input-hint">Enter to send · Shift+Enter for new line · Switch models anytime</div>
+      <div class="input-hint">Enter to send · Shift+Enter for new line · ◆ Gemini is FREE forever!</div>
     </div>
   </div>
 </div>
@@ -74,146 +80,102 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  let currentModel = 'claude';
+  let currentModel = 'gemini';
   let isLoading = false;
   let msgHistory = [];
   let currentChatId = null;
   let currentUser = null;
 
-  // Get fresh token every time
   async function getToken() {
     if (!currentUser) return null;
     return await currentUser.getIdToken(true);
   }
 
-  // AUTH GUARD
   onAuthStateChanged(auth, async user => {
     if (!user) { window.location.href = 'login.html'; return; }
     currentUser = user;
-    const name = user.displayName || 'USER';
-    document.querySelector('.welcome-h').textContent = `HEY ${name.toUpperCase()}!`;
+    document.querySelector('.welcome-h').textContent = `HEY ${(user.displayName || 'USER').toUpperCase()}!`;
     await loadHistory();
   });
 
-  // SWITCH MODEL
   window.switchModel = function(model) {
     currentModel = model;
-    document.getElementById('claudeBtn').classList.toggle('active', model === 'claude');
-    document.getElementById('gptBtn').classList.toggle('active', model === 'gpt');
-    document.getElementById('modelPill').textContent = model === 'claude' ? 'claude-sonnet-4' : 'gpt-4o';
-    document.getElementById('inputBadge').textContent = model === 'claude' ? '⬡ CLAUDE' : '✦ GPT-4o';
+    ['geminiBtn','claudeBtn','gptBtn'].forEach(id => document.getElementById(id).classList.remove('active'));
+    const map = {
+      gemini: { btn:'geminiBtn', pill:'gemini-1.5-flash', badge:'◆ GEMINI' },
+      claude: { btn:'claudeBtn', pill:'claude-sonnet-4', badge:'⬡ CLAUDE' },
+      gpt: { btn:'gptBtn', pill:'gpt-4o', badge:'✦ GPT-4o' }
+    };
+    const m = map[model];
+    document.getElementById(m.btn).classList.add('active');
+    document.getElementById('modelPill').textContent = m.pill;
+    document.getElementById('inputBadge').textContent = m.badge;
   };
 
-  // SEND MESSAGE
   window.sendMessage = async function() {
     if (isLoading) return;
     const input = document.getElementById('msgInput');
     const text = input.value.trim();
     if (!text) return;
-
     input.value = ''; input.style.height = 'auto';
     isLoading = true;
     document.getElementById('sendBtn').disabled = true;
-
     const welcome = document.getElementById('welcomeScreen');
     if (welcome) welcome.remove();
-
     msgHistory.push({ role: 'user', content: text });
     renderMsg('user', text, currentModel, true);
     const typingId = showTyping();
-
     try {
-      // Get fresh token every time!
       const token = await getToken();
-
-      const endpoint = currentModel === 'claude'
-        ? `${BACKEND_URL}/api/claude`
-        : `${BACKEND_URL}/api/gpt`;
-
-      const res = await fetch(endpoint, {
+      const res = await fetch(`${BACKEND_URL}/api/${currentModel}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          messages: msgHistory.map(m => ({ role: m.role, content: m.content }))
-        })
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ messages: msgHistory.map(m => ({ role: m.role, content: m.content })) })
       });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || `Server error: ${res.status}`);
-      }
-
+      if (!res.ok) { const e = await res.json(); throw new Error(e.error || `Error ${res.status}`); }
       removeTyping(typingId);
       const bubble = createStreamBubble(currentModel);
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let fullText = '';
-      let buffer = '';
-
+      let fullText = '', buffer = '';
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
-
+        const lines = buffer.split('\n'); buffer = lines.pop();
         for (const line of lines) {
           if (!line.startsWith('data: ')) continue;
           const data = line.slice(6).trim();
           if (data === '[DONE]') break;
           try {
             const json = JSON.parse(data);
-            // Claude
-            if (json.type === 'content_block_delta' && json.delta?.text) {
-              fullText += json.delta.text;
-              updateStreamBubble(bubble, fullText);
-            }
-            // GPT
+            if (json.type === 'content_block_delta' && json.delta?.text) { fullText += json.delta.text; updateStreamBubble(bubble, fullText); }
             const delta = json.choices?.[0]?.delta?.content;
-            if (delta) {
-              fullText += delta;
-              updateStreamBubble(bubble, fullText);
-            }
+            if (delta) { fullText += delta; updateStreamBubble(bubble, fullText); }
           } catch {}
         }
       }
-
       finalizeStreamBubble(bubble, fullText);
       msgHistory.push({ role: 'assistant', content: fullText, model: currentModel });
       await saveChat(text, fullText);
       await loadHistory();
-
-    } catch(err) {
-      removeTyping(typingId);
-      showError('⚠ ' + err.message);
-      console.error('Chat error:', err);
-    }
-
+    } catch(err) { removeTyping(typingId); showError('⚠ ' + err.message); }
     isLoading = false;
     document.getElementById('sendBtn').disabled = false;
     document.getElementById('msgInput').focus();
   };
 
-  // SAVE TO FIRESTORE
   async function saveChat(userMsg, aiReply) {
     if (!currentUser) return;
     const title = userMsg.slice(0, 40) + (userMsg.length > 40 ? '...' : '');
     try {
       if (!currentChatId) {
-        const ref = await addDoc(collection(db, 'users', currentUser.uid, 'chats'), {
-          title, model: currentModel, messages: msgHistory,
-          createdAt: serverTimestamp(), updatedAt: serverTimestamp()
-        });
+        const ref = await addDoc(collection(db, 'users', currentUser.uid, 'chats'), { title, model: currentModel, messages: msgHistory, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
         currentChatId = ref.id;
       } else {
-        await updateDoc(doc(db, 'users', currentUser.uid, 'chats', currentChatId), {
-          messages: msgHistory, model: currentModel, updatedAt: serverTimestamp()
-        });
+        await updateDoc(doc(db, 'users', currentUser.uid, 'chats', currentChatId), { messages: msgHistory, model: currentModel, updatedAt: serverTimestamp() });
       }
-    } catch(e) { console.error('Firestore save error:', e); }
+    } catch(e) { console.error(e); }
   }
 
   async function loadHistory() {
@@ -229,18 +191,17 @@
         const el = document.createElement('div');
         el.className = 'chat-item' + (d.id === currentChatId ? ' active' : '');
         el.onclick = () => loadChat(d.id, data, el);
-        el.innerHTML = `<div class="chat-item-title">${data.title || 'Untitled'}</div><div class="chat-item-meta">${(data.model || 'claude').toUpperCase()} · ${formatDate(data.updatedAt?.toDate())}</div>`;
+        el.innerHTML = `<div class="chat-item-title">${data.title || 'Untitled'}</div><div class="chat-item-meta">${(data.model || 'gemini').toUpperCase()} · ${formatDate(data.updatedAt?.toDate())}</div>`;
         sidebar.appendChild(el);
       });
-    } catch(e) { console.error('Load history error:', e); }
+    } catch(e) { console.error(e); }
   }
 
   function loadChat(chatId, data, elRef) {
-    currentChatId = chatId;
-    msgHistory = data.messages || [];
+    currentChatId = chatId; msgHistory = data.messages || [];
     const container = document.getElementById('chatMessages');
     container.innerHTML = '';
-    msgHistory.forEach(m => renderMsg(m.role, m.content, m.model || 'claude', false));
+    msgHistory.forEach(m => renderMsg(m.role, m.content, m.model || 'gemini', false));
     document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
     elRef.classList.add('active');
     container.scrollTop = container.scrollHeight;
@@ -248,31 +209,34 @@
 
   window.newChat = function() {
     currentChatId = null; msgHistory = [];
-    const container = document.getElementById('chatMessages');
-    container.innerHTML = `<div class="chat-welcome" id="welcomeScreen"><div class="welcome-glyph">⬡</div><div class="welcome-h">NEW CONVERSATION</div><div class="welcome-p">Start typing below.</div></div>`;
+    document.getElementById('chatMessages').innerHTML = `<div class="chat-welcome" id="welcomeScreen"><div class="welcome-glyph">◆</div><div class="welcome-h">NEW CONVERSATION</div><div class="welcome-p">Start typing below.</div></div>`;
     document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
   };
 
-  // RENDER HELPERS
+  function getModelInfo(model) {
+    if (model === 'claude') return { av:'⬡', mClass:'claude-msg', labelClass:'claude-label', labelTxt:'CLAUDE' };
+    if (model === 'gpt') return { av:'✦', mClass:'gpt-msg', labelClass:'gpt-label', labelTxt:'GPT-4o' };
+    return { av:'◆', mClass:'gemini-msg', labelClass:'gemini-label', labelTxt:'GEMINI' };
+  }
+
   function renderMsg(role, content, model, animate) {
     const container = document.getElementById('chatMessages');
+    const { av, mClass, labelClass, labelTxt } = getModelInfo(model);
     const row = document.createElement('div');
-    row.className = `msg-row ${role} ${role === 'assistant' ? (model === 'claude' ? 'claude-msg' : 'gpt-msg') : ''}`;
+    row.className = `msg-row ${role} ${role === 'assistant' ? mClass : ''}`;
     if (!animate) row.style.animation = 'none';
-    const av = role === 'user' ? 'YOU' : (model === 'claude' ? '⬡' : '✦');
-    const label = role === 'assistant' ? `<div class="msg-label ${model === 'claude' ? 'claude-label' : 'gpt-label'}">${model === 'claude' ? 'CLAUDE' : 'GPT-4o'}</div>` : '';
-    row.innerHTML = `<div class="msg-avatar">${av}</div><div class="msg-body">${label}<div class="msg-bubble">${escHtml(content).replace(/\n/g,'<br>')}</div></div>`;
-    container.appendChild(row);
-    container.scrollTop = container.scrollHeight;
+    const label = role === 'assistant' ? `<div class="msg-label ${labelClass}">${labelTxt}</div>` : '';
+    row.innerHTML = `<div class="msg-avatar">${role === 'user' ? 'YOU' : av}</div><div class="msg-body">${label}<div class="msg-bubble">${escHtml(content).replace(/\n/g,'<br>')}</div></div>`;
+    container.appendChild(row); container.scrollTop = container.scrollHeight;
   }
 
   function showTyping() {
     const container = document.getElementById('chatMessages');
     const id = 'typing_' + Date.now();
-    const mClass = currentModel === 'claude' ? 'claude-msg' : 'gpt-msg';
+    const { av, mClass } = getModelInfo(currentModel);
     const row = document.createElement('div');
     row.className = `msg-row assistant ${mClass}`; row.id = id;
-    row.innerHTML = `<div class="msg-avatar">${currentModel === 'claude' ? '⬡' : '✦'}</div><div class="msg-body"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
+    row.innerHTML = `<div class="msg-avatar">${av}</div><div class="msg-body"><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div></div>`;
     container.appendChild(row); container.scrollTop = container.scrollHeight;
     return id;
   }
@@ -281,30 +245,28 @@
 
   function createStreamBubble(model) {
     const container = document.getElementById('chatMessages');
+    const { av, mClass, labelClass, labelTxt } = getModelInfo(model);
     const row = document.createElement('div');
-    row.className = `msg-row assistant ${model === 'claude' ? 'claude-msg' : 'gpt-msg'}`;
-    row.innerHTML = `<div class="msg-avatar">${model === 'claude' ? '⬡' : '✦'}</div><div class="msg-body"><div class="msg-label ${model === 'claude' ? 'claude-label' : 'gpt-label'}">${model === 'claude' ? 'CLAUDE' : 'GPT-4o'}</div><div class="msg-bubble stream-bubble"></div></div>`;
+    row.className = `msg-row assistant ${mClass}`;
+    row.innerHTML = `<div class="msg-avatar">${av}</div><div class="msg-body"><div class="msg-label ${labelClass}">${labelTxt}</div><div class="msg-bubble stream-bubble"></div></div>`;
     container.appendChild(row); container.scrollTop = container.scrollHeight;
     return row.querySelector('.stream-bubble');
   }
 
-  function updateStreamBubble(bubble, text) {
-    bubble.innerHTML = escHtml(text).replace(/\n/g,'<br>') + '<span class="stream-cursor"></span>';
-    document.getElementById('chatMessages').scrollTop = 99999;
-  }
-
+  function updateStreamBubble(bubble, text) { bubble.innerHTML = escHtml(text).replace(/\n/g,'<br>') + '<span class="stream-cursor"></span>'; document.getElementById('chatMessages').scrollTop = 99999; }
   function finalizeStreamBubble(bubble, text) { bubble.innerHTML = escHtml(text).replace(/\n/g,'<br>'); }
-
   function showError(msg) {
-    const container = document.getElementById('chatMessages');
     const el = document.createElement('div');
     el.style.cssText = 'text-align:center;font-family:JetBrains Mono,monospace;font-size:0.75rem;color:#ff6b6b;padding:12px;border:1px solid rgba(255,100,100,0.2);border-radius:6px;margin:8px auto;max-width:400px;';
-    el.textContent = msg; container.appendChild(el); container.scrollTop = container.scrollHeight;
+    el.textContent = msg; document.getElementById('chatMessages').appendChild(el);
   }
-
   function escHtml(t) { return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function formatDate(date) { if (!date) return ''; return date.toLocaleDateString('en-IN',{day:'numeric',month:'short'}); }
-
+  function getModelInfo(model) {
+    if (model === 'claude') return { av:'⬡', mClass:'claude-msg', labelClass:'claude-label', labelTxt:'CLAUDE' };
+    if (model === 'gpt') return { av:'✦', mClass:'gpt-msg', labelClass:'gpt-label', labelTxt:'GPT-4o' };
+    return { av:'◆', mClass:'gemini-msg', labelClass:'gemini-label', labelTxt:'GEMINI' };
+  }
   window.logout = async function() { await signOut(auth); localStorage.clear(); window.location.href = '../index.html'; };
   window.quickMsg = function(text) { document.getElementById('msgInput').value = text; window.sendMessage(); };
   window.autoResize = function(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 140) + 'px'; };
