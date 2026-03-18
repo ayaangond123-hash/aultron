@@ -7,60 +7,29 @@
 <link rel="icon" type="image/webp" href="../logo.webp">
 <link rel="stylesheet" href="../css/global.css">
 <style>
-.btn-google {
-  width: 100%;
-  padding: 14px;
-  background: transparent;
-  color: var(--white);
-  border: 1px solid var(--border-bright);
-  border-radius: 4px;
-  font-family: 'Sora', sans-serif;
-  font-size: 0.88rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 4px;
-}
-.btn-google:hover { border-color: var(--green); color: var(--green); }
-.btn-google img { width: 18px; height: 18px; }
+.btn-google { width:100%; padding:14px; background:transparent; color:var(--white); border:1px solid var(--border-bright); border-radius:4px; font-family:'Sora',sans-serif; font-size:0.88rem; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:4px; }
+.btn-google:hover { border-color:var(--green); color:var(--green); }
+.btn-google img { width:18px; height:18px; }
 </style>
 </head>
 <body>
 <div class="noise"></div>
 <div class="scanlines"></div>
-
 <nav class="nav">
-  <a href="../index.html" class="nav-logo">
-    <img src="../logo.webp" alt="Aultron AI" class="nav-logo-img">
-    AULTRON<span>.</span>AI
-  </a>
-  <div class="nav-links">
-    <a href="login.html" class="nav-cta">SIGN IN →</a>
-  </div>
+  <a href="../index.html" class="nav-logo"><img src="../logo.webp" alt="Aultron AI" class="nav-logo-img">AULTRON<span>.</span>AI</a>
+  <div class="nav-links"><a href="login.html" class="nav-cta">SIGN IN →</a></div>
 </nav>
-
 <div class="auth-wrap">
   <div class="auth-card">
-    <div class="auth-logo">
-      <img src="../logo.webp" alt="Aultron" class="auth-logo-img">
-      AULTRON<span>.</span>AI
-    </div>
+    <div class="auth-logo"><img src="../logo.webp" alt="Aultron" class="auth-logo-img">AULTRON<span>.</span>AI</div>
     <div class="auth-sub">Create your free account</div>
-
     <div class="alert alert-error" id="errMsg"></div>
     <div class="alert alert-success" id="okMsg"></div>
-
-    <!-- GOOGLE BUTTON -->
     <button class="btn-google" onclick="handleGoogle()">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
       Continue with Google
     </button>
-
     <div class="form-divider">or</div>
-
     <div class="form-group">
       <label class="form-label">DISPLAY NAME</label>
       <input type="text" class="form-input" id="name" placeholder="Your name">
@@ -73,26 +42,21 @@
       <label class="form-label">PASSWORD</label>
       <input type="password" class="form-input" id="password" placeholder="Min 8 characters">
     </div>
-
     <button class="form-btn" id="signupBtn" onclick="handleSignup()">CREATE ACCOUNT →</button>
-
     <div class="form-divider">or</div>
     <div class="form-footer">Already have an account? <a href="login.html">Sign in</a></div>
   </div>
 </div>
-
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
   import { firebaseConfig } from "../js/config.js";
-
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
   const googleProvider = new GoogleAuthProvider();
 
-  // GOOGLE SIGNUP
   window.handleGoogle = async function() {
     const errEl = document.getElementById('errMsg');
     const okEl = document.getElementById('okMsg');
@@ -100,25 +64,15 @@
     try {
       const cred = await signInWithPopup(auth, googleProvider);
       const token = await cred.user.getIdToken();
-      await setDoc(doc(db, 'users', cred.user.uid), {
-        name: cred.user.displayName,
-        email: cred.user.email,
-        createdAt: serverTimestamp(),
-        plan: 'free'
-      }, { merge: true });
+      await setDoc(doc(db, 'users', cred.user.uid), { name: cred.user.displayName, email: cred.user.email, createdAt: serverTimestamp(), plan: 'free' }, { merge: true });
       localStorage.setItem('aultron_token', token);
       localStorage.setItem('aultron_uid', cred.user.uid);
       localStorage.setItem('aultron_name', cred.user.displayName);
-      okEl.textContent = '✓ Account created with Google! Redirecting...';
-      okEl.style.display = 'block';
+      okEl.textContent = '✓ Account created! Redirecting...'; okEl.style.display = 'block';
       setTimeout(() => { window.location.href = 'chat.html'; }, 1000);
-    } catch(err) {
-      errEl.textContent = '⚠ ' + err.message;
-      errEl.style.display = 'block';
-    }
+    } catch(err) { errEl.textContent = '⚠ ' + err.message; errEl.style.display = 'block'; }
   };
 
-  // EMAIL SIGNUP
   window.handleSignup = async function() {
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
@@ -126,33 +80,26 @@
     const errEl = document.getElementById('errMsg');
     const okEl = document.getElementById('okMsg');
     const btn = document.getElementById('signupBtn');
-
     errEl.style.display = 'none'; okEl.style.display = 'none';
     if (!name || !email || !password) { errEl.textContent = '⚠ Fill in all fields.'; errEl.style.display = 'block'; return; }
     if (password.length < 8) { errEl.textContent = '⚠ Password must be 8+ characters.'; errEl.style.display = 'block'; return; }
-
     btn.textContent = 'CREATING...'; btn.disabled = true;
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: name });
-      await setDoc(doc(db, 'users', cred.user.uid), {
-        name, email, createdAt: serverTimestamp(), plan: 'free'
-      });
+      await setDoc(doc(db, 'users', cred.user.uid), { name, email, createdAt: serverTimestamp(), plan: 'free' });
       const token = await cred.user.getIdToken();
       localStorage.setItem('aultron_token', token);
       localStorage.setItem('aultron_uid', cred.user.uid);
       localStorage.setItem('aultron_name', name);
-      okEl.textContent = '✓ Account created! Redirecting...';
-      okEl.style.display = 'block';
+      okEl.textContent = '✓ Account created! Redirecting...'; okEl.style.display = 'block';
       setTimeout(() => { window.location.href = 'chat.html'; }, 1200);
     } catch(err) {
       btn.textContent = 'CREATE ACCOUNT →'; btn.disabled = false;
       const msgs = { 'auth/email-already-in-use':'Email already registered.', 'auth/invalid-email':'Invalid email.', 'auth/weak-password':'Password too weak.' };
-      errEl.textContent = '⚠ ' + (msgs[err.code] || err.message);
-      errEl.style.display = 'block';
+      errEl.textContent = '⚠ ' + (msgs[err.code] || err.message); errEl.style.display = 'block';
     }
   };
-
   document.addEventListener('keydown', e => { if (e.key === 'Enter') handleSignup(); });
 </script>
 </body>
