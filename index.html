@@ -27,7 +27,6 @@
   <div class="nav-links">
     <a href="#features">Features</a>
     <a href="#a9">A9</a>
-    <a href="#pricing">Pricing</a>
     <a href="pages/login.html" class="nav-cta">LAUNCH APP →</a>
   </div>
 </nav>
@@ -167,40 +166,6 @@
   </div>
 </section>
 
-<!-- PRICING -->
-<section class="pricing-section" id="pricing">
-  <div class="pricing-inner">
-    <div class="section-tag">// PRICING</div>
-    <h2 class="section-heading">SIMPLE PRICING.</h2>
-    <div class="pricing-grid">
-      <div class="price-card" data-reveal>
-        <div class="price-tier">FREE</div>
-        <div class="price-amount">₹0<span>/mo</span></div>
-        <ul class="price-list">
-          <li>✓ A9 AI access</li>
-          <li>✓ 20 messages/day</li>
-          <li>✓ Save up to 10 chats</li>
-          <li>✓ Google login</li>
-          <li>✗ Priority response</li>
-        </ul>
-        <a href="pages/signup.html" class="btn-outline" style="width:100%;justify-content:center;margin-top:auto">GET STARTED</a>
-      </div>
-      <div class="price-card price-featured" data-reveal>
-        <div class="price-badge">POPULAR</div>
-        <div class="price-tier">PRO</div>
-        <div class="price-amount">₹299<span>/mo</span></div>
-        <ul class="price-list">
-          <li>✓ A9 AI access</li>
-          <li>✓ Unlimited messages</li>
-          <li>✓ Unlimited chat history</li>
-          <li>✓ Priority response</li>
-          <li>✓ Early access to new features</li>
-        </ul>
-        <a href="pages/signup.html" class="btn-primary" style="width:100%;justify-content:center;margin-top:auto">START PRO →</a>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- CTA -->
 <section class="cta-section">
@@ -236,3 +201,12 @@
 </script>
 </body>
 </html>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/aultron/sw.js')
+      .then(() => console.log('✅ Aultron PWA ready!'))
+      .catch(e => console.log('SW error:', e));
+  });
+}
+</script>
